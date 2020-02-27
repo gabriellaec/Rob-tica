@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import time
-from math import pi
+import math
 import matplotlib.cm as cm
 
 # If you want to open a video, just change v2.VideoCapture(0) from 0 to the filename, just like below
@@ -20,6 +20,15 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 lower = 0
 upper = 1
+
+def comp(a,b):
+    if a[1] > b[1]:
+        return -1
+    elif a[1] == b[1]:
+        return 0
+    else:
+        return 1
+
 
 print("Press q to QUIT")
 
@@ -38,39 +47,7 @@ def auto_canny(image, sigma=0.33):
     return edged
 
 
-    ####################
-def find_homography_draw_box(kp1, kp2, img_cena):
-    
-        out = img_cena.copy()
-        
-        src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
-        dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
-
-
-        # Tenta achar uma trasformacao composta de rotacao, translacao e escala que situe uma imagem na outra
-        # Esta transformação é chamada de homografia 
-        # Para saber mais veja 
-        # https://docs.opencv.org/3.4/d9/dab/tutorial_homography.html
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
-        matchesMask = mask.ravel().tolist()
-
-
-        
-        h,w = img_original.shape
-        # Um retângulo com as dimensões da imagem original
-        pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
-
-        # Transforma os pontos do retângulo para onde estao na imagem destino usando a homografia encontrada
-        dst = cv2.perspectiveTransform(pts,M)
-
-
-        # Desenha um contorno em vermelho ao redor de onde o objeto foi encontrado
-        img2b = cv2.polylines(out,[np.int32(dst)],True,(255,255,0),5, cv2.LINE_AA)
-        
-        return img2b
-
-    ######################################################
-
+ 
 while(True):
     # Capture frame-by-frame
     ret, frame = cap.read()
@@ -89,17 +66,13 @@ while(True):
 
     circles = []
 
+    out_circles = []
+
 
     # Obtains a version of the edges image where we can draw in color
     bordas_color = cv2.cvtColor(bordas, cv2.COLOR_GRAY2BGR)
 
-    # HoughCircles - detects circles using the Hough Method. For an explanation of
-    # param1 and param2 please see an explanation here http://www.pyimagesearch.com/2014/07/21/detecting-circles-images-using-opencv-hough-circles/
-    circles = None
-    circles=cv2.HoughCircles(bordas,cv2.HOUGH_GRADIENT,2,40,param1=50,param2=100,minRadius=5,maxRadius=60)
-
-
-   
+     
 
 
 #cria mascara magenta
@@ -115,61 +88,19 @@ while(True):
     masks = mask_coke_mag + mask_coke_cian
 
     imagem = cv2.bitwise_or(frame, frame, mask=masks)
+    imagem2 = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
 
-    cv2.imshow("mascara", imagem)
+    #cv2.imshow("mascara", imagem)
 
-        ########################################################
-    # Número mínimo de pontos correspondentes
-    MIN_MATCH_COUNT = 10
+      
 
-    cena_bgr = frame
-    original_bgr = cv2.imread("LogoInsper.png") # Imagem do cenario
-
-    # Versões RGB das imagens, para plot
-    original_rgb = cv2.cvtColor(original_bgr, cv2.COLOR_BGR2RGB)
-    cena_rgb = cv2.cvtColor(cena_bgr, cv2.COLOR_BGR2RGB)
-
-    # Versões grayscale para feature matching
-    img_original = cv2.cvtColor(original_bgr, cv2.COLOR_BGR2GRAY)
-    img_cena = cv2.cvtColor(cena_bgr, cv2.COLOR_BGR2GRAY)
-
-    framed = None
-
-    # Imagem de saída
-    out = cena_rgb.copy()
+    # HoughCircles - detects circles using the Hough Method. For an explanation of
+    # param1 and param2 please see an explanation here http://www.pyimagesearch.com/2014/07/21/detecting-circles-images-using-opencv-hough-circles/
+    circles = None
+    circles=cv2.HoughCircles(imagem2,cv2.HOUGH_GRADIENT,2,70,param1=50,param2=60,minRadius=5,maxRadius=100)
 
 
-    # Cria o detector BRISK
-    brisk = cv2.BRISK_create()
-
-    # Encontra os pontos únicos (keypoints) nas duas imagems
-    kp1, des1 = brisk.detectAndCompute(img_original ,None)
-    kp2, des2 = brisk.detectAndCompute(img_cena,None)
-
-    # Configura o algoritmo de casamento de features que vê *como* o objeto que deve ser encontrado aparece na imagem
-    bf = cv2.BFMatcher(cv2.NORM_HAMMING)
-
-
-    # Tenta fazer a melhor comparacao usando o algoritmo
-    matches = bf.knnMatch(des1,des2,k=2)
-
-    # store all the good matches as per Lowe's ratio test.
-    good = []
-    for m,n in matches:
-        if m.distance < 0.7*n.distance:
-            good.append(m)
-
-
-    if len(good)>MIN_MATCH_COUNT:
-        # Separa os bons matches na origem e no destino
-        print("Matches found")    
-        framed = find_homography_draw_box(kp1, kp2, cena_rgb)
-    else:
-        print("Not enough matches are found - %d/%d" % (len(good),MIN_MATCH_COUNT))
-
-
-        img3 = cv2.drawMatches(original_rgb,kp1,cena_rgb,kp2, good,       None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-    ############################################
+  
 
     if circles is not None:        
         circles = np.uint16(np.around(circles)).astype("int")
@@ -177,37 +108,61 @@ while(True):
             print(i)
             # draw the outer circle
             # cv2.circle(img, center, radius, color[, thickness[, lineType[, shift]]])
+           
+           
+        #if i[2]>=20 and i[2]<60:
+           ############################################
             cv2.circle(bordas_color,(i[0],i[1]),i[2],(0,255,0),2)
             # draw the center of the circle
-            cv2.circle(bordas_color,(i[0],i[1]),2,(0,0,255),3)
+            cv2.circle(bordas_color,(i[0],i[1]),i[2],(0,0,255),3)
 
-        if len(circles)>=2:
-            x, y, r = circles[0]
-            x2, y2, r2 = circles[1]
+            out_circles.append( ((i[0], i[1]) , i[2]) )
 
-            #distancia entre os dois circulos
-            h=(((x-x2)**2)+((y-y2)**2))**(1/2)
-            H=14
-            f=707.1428
-            #distancia entre folha e camera
-            D=(H*f)/h
+            if len(out_circles)>=2:
+                x, y = out_circles[0][0]
+                x2, y2 = out_circles[1][0]
+               # x = out_circles[0][0]
+                #x2 = out_circles[1][0]
+                #y = out_circles[0][1]
+                #y2 = out_circles[1][1]
 
-            cv2.putText(imagem,D,(0,50), font, (0.5),(255,255,255),2,cv2.LINE_AA)
+                print(x, x2, y, y2)
+                font = cv2.FONT_HERSHEY_SIMPLEX
 
-            #linha entre circulos
+                #distancia entre os dois circulos
+                deltaX=(x-x2)**2
+                deltaY=(y-y2)**2
+                h=(deltaX+deltaY)**(0.5)
+                cv2.putText(imagem, "h: {}".format(h) ,(200,200), font, (0.5),(255,255,255),2,cv2.LINE_AA)
 
-            cv2.line(imagem, (x,y), (x2,y2), (0, 255, 0), thickness=3, lineType=8)
+                H=14
+                f=707
+                #distancia entre folha e camera
+                D=(H*f)/h
 
-            #angulo entre linha entre circulos e a horizontal
-            Y=y-y2
-            X=x-x2
-            angulo=math.atan(Y/X)
-            angulo=degrees(angulo)
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                cv2.putText(imagem, "Distancia: {}".format(D) ,(50,200), font, (0.5),(255,255,255),2,cv2.LINE_AA)
 
-            cv2.putText(bordas_color,angulo,(0,50), font, (0.5),(255,255,255),2,cv2.LINE_AA)
+                #linha entre circulos
+
+                cv2.line(imagem, (x,y), (x2,y2), (0, 255, 0), thickness=3, lineType=8)
+
+                #angulo entre linha entre circulos e a horizontal
+                Y=abs(y-y2)
+                X=abs(x-x2)
+                angulo=math.atan2(Y,X)
+                angulo=math.degrees(angulo)
+
+                #print(angulo)
+                cv2.putText(bordas_color,"Angulo: {}".format(angulo),(0,150), font, (0.75),(255,255,255),2,cv2.LINE_AA)
 
 
             #cv2.imshow('img', img)
+
+
+    out_circles.sort(cmp = comp)
+
+    print(out_circles)
 
 
 
@@ -225,8 +180,15 @@ while(True):
     #More drawing functions @ http://docs.opencv.org/2.4/modules/core/doc/drawing_functions.html
 
     # Display the resulting frame
-    cv2.imshow('Detector de circulos',bordas_color)
+    #cv2.imshow('Detector de circulos',bordas_color)
     #cv2.imshow('Frame',frame)
+ 
+ 
+    tudo = bordas_color + imagem 
+
+    cv2.imshow('Tudo', tudo)
+
+
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
