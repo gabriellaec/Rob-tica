@@ -133,7 +133,7 @@ while(True):
                 deltaX=(x-x2)**2
                 deltaY=(y-y2)**2
                 h=(deltaX+deltaY)**(0.5)
-                cv2.putText(imagem, "h: {}".format(h) ,(200,200), font, (0.5),(255,255,255),2,cv2.LINE_AA)
+               # cv2.putText(imagem, "h: {}".format(h) ,(200,200), font, (0.5),(255,255,255),2,cv2.LINE_AA)
 
                 H=14
                 f=707
@@ -141,7 +141,7 @@ while(True):
                 D=(H*f)/h
 
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                cv2.putText(imagem, "Distancia: {}".format(D) ,(50,200), font, (0.5),(255,255,255),2,cv2.LINE_AA)
+                cv2.putText(imagem, "Distancia: {}".format(D) ,(0,450), font, (0.75),(255,255,255),2,cv2.LINE_AA)
 
                 #linha entre circulos
 
@@ -154,7 +154,7 @@ while(True):
                 angulo=math.degrees(angulo)
 
                 #print(angulo)
-                cv2.putText(bordas_color,"Angulo: {}".format(angulo),(0,150), font, (0.75),(255,255,255),2,cv2.LINE_AA)
+                cv2.putText(bordas_color,"Angulo: {}".format(angulo),(0,400), font, (0.75),(255,255,255),2,cv2.LINE_AA)
 
 
             #cv2.imshow('img', img)
