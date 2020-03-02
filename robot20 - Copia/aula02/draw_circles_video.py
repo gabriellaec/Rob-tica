@@ -76,13 +76,13 @@ while(True):
 
 
 #cria mascara magenta
-    magenta_menor = np.array([160,  50,  50])
-    magenta_maior = np.array([170, 255, 255])
+    magenta_menor = np.array([166,  50,  50])
+    magenta_maior = np.array([176, 255, 255])
     mask_coke_mag = cv2.inRange(hsv, magenta_menor, magenta_maior)
 
 #cria mascara ciano
-    ciano_menor = np.array([94, 50, 50])
-    ciano_maior = np.array([104, 255, 255])
+    ciano_menor = np.array([100, 50, 50])
+    ciano_maior = np.array([110, 255, 255])
     mask_coke_cian = cv2.inRange(hsv, ciano_menor, ciano_maior)
 
     masks = mask_coke_mag + mask_coke_cian
